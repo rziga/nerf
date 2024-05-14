@@ -1,0 +1,13 @@
+[package]
+name = "burn_test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+burn = { version = "0.13.2", default-features = false, features = [ "ndarray" ] }
+# burn-wgpu = { version = "0.13.2", default-features = false }
+burn-ndarray = { version = "0.13.2", default-features = false }
+yew = { version = "0.21.0", features = ["csr"] }
+
+[build-dependencies]
+burn-import = "0.13.2"
