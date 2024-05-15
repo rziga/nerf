@@ -3,26 +3,6 @@ use burn_ndarray;
 
 use burn_test::inference::*;
 
-use yew::prelude::*;
-
-#[function_component]
-fn App() -> Html {
-    let counter = use_state(|| 0);
-    let onclick = {
-        let counter = counter.clone();
-        move |_| {
-            let value = *counter + 1;
-            counter.set(value);
-        }
-    };
-
-    html! {
-        <div>
-            <button {onclick}>{ "+1" }</button>
-            <p>{ *counter }</p>
-        </div>
-    }
-}
 
 fn main() {
     // backend and device
@@ -32,7 +12,7 @@ fn main() {
     //let device = &backend::wgpu::WgpuDevice::default();
     
     // nelf inferencer
-    let runner = NeLFInferencer::new();
+    //let runner = NeLFInferencer::new();
 
     // consts
     let h: usize = 100;
@@ -51,6 +31,6 @@ fn main() {
 
     let rays = get_rays(h, w, focal, pose, near, far, num_samples, emb_dim, device);
     println!("{:#?}", rays.clone().slice([0..3, 0..4, 0..4]));
-    let out = runner.render_rays(rays);
-    println!("{:#?}", out.slice([0..3, 0..4, 0..4]));
+    //let out = runner.render_rays(rays);
+    //println!("{:#?}", out.slice([0..3, 0..4, 0..4]));
 }

@@ -1,8 +1,26 @@
-<!doctype html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Yew App</title>
-    </head>
-    <body></body>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <script>
+      addEventListener("TrunkApplicationStarted", (event) => {
+          const canvas = document.getElementById('drawing');
+          const ctx = canvas.getContext('2d');
+          const renderBtn = document.getElementById('render');
+
+          renderBtn.addEventListener('click', () => {
+              window.wasmBindings.draw(ctx, 600, 600, 0, 0);
+          });
+      })
+      .catch(console.error);
+
+    </script>
+  </head>
+  <body>
+    <main>
+      <div class="controls">
+        <button class="button-primary" id="render">render</button>
+      </div>
+      <canvas id="drawing" width="600" height="600"></canvas>
+    </main>
+  </body>
 </html>

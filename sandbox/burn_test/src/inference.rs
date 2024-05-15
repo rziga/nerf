@@ -14,7 +14,7 @@ impl<B: Backend> NeLFInferencer<B> {
     pub fn render_rays(&self, rays: Tensor<B, 3>) -> Tensor<B, 3> {
         let rays = rays.unsqueeze_dim(0);
         let out = self.model.forward(rays);
-        activation::relu(out.squeeze(0))
+        activation::sigmoid(out.squeeze(0))
     }
 }
 
