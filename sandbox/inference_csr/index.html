@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <header>
+        <title>ONNX Runtime JavaScript examples: Quick Start - Web (using script tag)</title>
+    </header>
+    <body>
+        <script type="module" allow="cross-origin-isolated">
+            // see also advanced usage of importing ONNX Runtime Web:
+            // https://github.com/microsoft/onnxruntime-inference-examples/tree/main/js/importing_onnxruntime-web
+
+            // import ONNXRuntime Web from CDN
+            import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/esm/ort.min.js";
+            // set wasm path override
+            //ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
+
+            // use an async context to call onnxruntime functions.
+            async function main() {
+                try {
+                    // create a new session and load the specific model.
+                    //
+                    // the model in this example contains a single MatMul node
+                    // it has 2 inputs: 'a'(float32, 3x4) and 'b'(float32, 4x3)
+                    // it has 1 output: 'c'(float32, 3x3)
+                    const session = await ort.InferenceSession.create(
+                        './nelf.onnx',
+                        { executionProviders: ["webgl"] }
+                    );
+
+                    // prepare inputs. a tensor need its corresponding TypedArray as data
+                    const data = new Float32Array(1*624*100*100);
+                    const tensor = new ort.Tensor('float32', data, [1, 624, 100, 100]);
+
+                    // prepare feeds. use model input names as keys.
+                    const feeds = { "input.1": tensor };
+
+                    // feed inputs and run
+                    var results;
+                    const start = new Date();
+                    for (let i = 0; i < 100; i++) {
+                        results = await session.run(feeds);
+                    }
+                    const duration = (new Date()) - start;
+                    console.log("duration", 10 * 1000 / duration)
+
+                    // read from results
+                    const out = await results["328"].getData();
+                    document.write(`data of result tensor 'c': ${out}`);
+                    console.log(results);
+
+                } catch (e) {
+                    document.write(`failed to inference ONNX model: ${e}.`);
+                }
+            }
+
+            main();
+        </script>
+    </body>
+</html>
