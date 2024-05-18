@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Index</title>
+</head>
+<body>
+    <script>
+        async function render() {
+            const now = new Date();
+            const response = await fetch("image");
+            const img = await response.blob();
+            const duration = (new Date()) - now;
+            document.getElementById("viewframe").src = URL.createObjectURL(img);
+            document.getElementById("fps").innerHTML = "FPS: " + (1000 / duration).toFixed(2);
+            requestAnimationFrame(render);
+        }
+        render();
+        
+
+    </script>
+    <img src="" alt="viewframe" id="viewframe">
+    <p id="fps"></p>
+</body>
+</html>
