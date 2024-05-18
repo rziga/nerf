@@ -12,7 +12,6 @@
             import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/esm/ort.min.js";
             // set wasm path override
             ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
-            ort.env.wasm.numThreads = 0;
 
             // use an async context to call onnxruntime functions.
             async function main() {
@@ -25,14 +24,14 @@
                     const session = await ort.InferenceSession.create(
                         '../model.onnx',
                         {
-                            executionProviders: ["webgpu", "webgl", "wasm"],
+                            executionProviders: ["webgl"],
                            // enableProfiling: true,
                         },
                     );
 
                     // prepare inputs. a tensor need its corresponding TypedArray as data
-                    const data = new Float32Array(1*624*100*100);
-                    const tensor = new ort.Tensor('float32', data, [1, 624, 100, 100]);
+                    const data = new Float32Array(1*624*50*50);
+                    const tensor = new ort.Tensor('float32', data, [1, 624, 50, 50]);
 
                     // prepare feeds. use model input names as keys.
                     const feeds = { "input.1": tensor };
@@ -49,7 +48,7 @@
                     //session.endProfiling();
 
                     // read from results
-                    const out = await results["328"].getData();
+                    const out = await results["out"].getData();
                     document.write(`data of result tensor 'c': ${out}`);
                     console.log(results);
 
