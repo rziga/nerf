@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", type=Path, required=True, help="Path to checkpoint dir.")
     parser.add_argument("--seed", type=int, required=False, default=1337, help="Seed for the experiment.")
     parser.add_argument("--batch_size", type=int, required=False, default=4, help="Batch size for the experiment.")
+    parser.add_argument("--train_steps", type=int, required=False, default=60000, help="Number of training steps.")
     parser.add_argument("--name", required=False, default="", help="Name for the experiment.")
     args = parser.parse_args()
 
@@ -30,7 +31,7 @@ if __name__ == "__main__":
                 every_n_train_steps=100
             )
         ],
-        max_steps=10_000
+        max_steps=args.train_steps
     )
 
     trainer.fit(
