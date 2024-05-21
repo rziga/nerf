@@ -46,7 +46,7 @@ class MobileR2LLighningModule(L.LightningModule):
 
         # log metrics
         self.val_psnr(pred_imgs, imgs)
-        self.log("val_psnr", self.val_psnr, prog_bar=True)
+        self.log("val_psnr", self.val_psnr, prog_bar=True, on_epoch=True)
         return loss
     
     def test_step(self, batch, batch_idx):

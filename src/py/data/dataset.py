@@ -3,6 +3,7 @@ from pathlib import Path
 
 import torch
 from torch.utils.data import Dataset
+from torchvision.io import read_image
 import numpy as np
 
 from .utils import get_rays, get_c2w
@@ -17,14 +18,14 @@ class BlenderPseudoDataset(Dataset):
 
         root = Path(root)
         self.dataset_info = self._load_info(root/"hwf"/"dataset_info.json")
-        self.img_paths = [f for f in sorted(root.glob("800x800_rgb/*"))]
+        self.img_paths = sorted([f for f in root.glob("vis/*") if "_" not in f.stem], key=lambda x: int(x.stem))
         self.poses = [get_c2w(self._load(f)) for f in sorted(root.glob("poses/*"))]
 
         assert len(self.img_paths) == len(self.poses),\
             f"Number of images does not match number of poses in the dataset at {root}."
 
     def __getitem__(self, index):
-        img = self._load(self.img_paths[index]).reshape(800, 800, 3).permute(2, 0, 1)
+        img = read_image(self.img_paths[index]) / 255
         pose = self.poses[index]
         rays = get_rays(
             self.dataset_info["downscaled_height"],

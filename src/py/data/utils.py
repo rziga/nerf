@@ -1,7 +1,7 @@
 import torch
 
 def normalize(vec, axis):
-    return vec / vec.norm(axis)
+    return vec / (vec.norm(dim=axis) + 1e-10)
 
 def look_at(centers):
     forward_vec = normalize(centers, axis=-1)
