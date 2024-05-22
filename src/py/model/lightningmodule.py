@@ -1,7 +1,7 @@
 import lightning as L
 from torch.optim import Adam
 from torch.nn import functional as F
-from torchmetrics import PeakSignalNoiseRatio
+from torchmetrics.image import PeakSignalNoiseRatio
 
 from .model import MobileR2L
 
