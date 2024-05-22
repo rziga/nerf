@@ -30,10 +30,10 @@ class BlenderDataModule(L.LightningDataModule):
     
     def train_dataloader(self):
         return DataLoader(
-            self.train, self.hparams["batch_size"], shuffle=True, num_workers=4)
+            self.train, self.hparams["batch_size"], shuffle=True, num_workers=8)
     
     def val_dataloader(self):
         return DataLoader(self.val, num_workers=4)
     
     def test_dataloader(self):
-        return DataLoader(self.test)
+        return DataLoader(self.test, num_workers=4)

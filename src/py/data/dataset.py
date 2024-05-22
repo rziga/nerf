@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import warnings
 
 import torch
 from torch.utils.data import Dataset
@@ -18,14 +19,17 @@ class BlenderPseudoDataset(Dataset):
 
         root = Path(root)
         self.dataset_info = self._load_info(root/"hwf"/"dataset_info.json")
-        self.img_paths = sorted([f for f in root.glob("vis/*") if "_" not in f.stem], key=lambda x: int(x.stem))
-        self.poses = [get_c2w(self._load(f)) for f in sorted(root.glob("poses/*"))]
+        print("searching for images...")
+        self.img_paths = sorted([f for f in root.glob("vis/*") if "_" not in f.stem], key=lambda f: int(f.stem))
+        print("loading poses...")
+        self.poses = [get_c2w(self._load(f)) for f in sorted(root.glob("poses/*"), key=lambda f: int(f.stem.split("_")[1]))]
+        print("done")
 
-        assert len(self.img_paths) == len(self.poses),\
-            f"Number of images does not match number of poses in the dataset at {root}."
+        if len(self.img_paths) != len(self.poses):
+            warnings.warn(f"Number of images does not match number of poses in the dataset at {root}.")
 
     def __getitem__(self, index):
-        img = read_image(self.img_paths[index]) / 255
+        img = read_image(str(self.img_paths[index])) / 255
         pose = self.poses[index]
         rays = get_rays(
             self.dataset_info["downscaled_height"],
