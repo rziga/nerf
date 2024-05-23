@@ -14,7 +14,7 @@ def look_at(centers):
     poses[:3, -1] = centers
     return poses
 
-def get_c2w(center):
+def get_c2w_pseudo(center):
     cam_pos = (center * (4.031128857175551 / 1.5)).unsqueeze(0)
     return look_at(cam_pos)
 

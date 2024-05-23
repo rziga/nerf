@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from torchvision.io import read_image
 import numpy as np
 
-from .utils import get_rays, get_c2w
+from .utils import get_rays, get_c2w_pseudo
 
 
 class BlenderPseudoDataset(Dataset):
@@ -22,8 +22,9 @@ class BlenderPseudoDataset(Dataset):
         print("searching for images...")
         self.img_paths = sorted([f for f in root.glob("vis/*") if "_" not in f.stem], key=lambda f: int(f.stem))
         print("loading poses...")
-        self.poses = [get_c2w(self._load(f)) for f in sorted(root.glob("poses/*"), key=lambda f: int(f.stem.split("_")[1]))]
+        self.poses = [get_c2w_pseudo(self._load(f)) for f in sorted(root.glob("poses/*"), key=lambda f: int(f.stem.split("_")[1]))]
         print("done")
+        print(sorted(root.glob("poses/*"), key=lambda f: int(f.stem.split("_")[1]))[:3], self.img_paths[:3])
 
         if len(self.img_paths) != len(self.poses):
             warnings.warn(f"Number of images does not match number of poses in the dataset at {root}.")

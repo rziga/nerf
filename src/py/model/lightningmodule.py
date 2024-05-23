@@ -36,6 +36,12 @@ class MobileR2LLighningModule(L.LightningModule):
         self.train_psnr(pred_imgs, imgs)
         self.log("train_loss", loss, prog_bar=True)
         self.log("train_psnr", self.train_psnr, prog_bar=True)
+
+        # log images
+        if (self.trainer.global_step) % 500 == 0:
+            self.logger.log_image(
+                key="samples", images=[pred_imgs[0].cpu(), imgs[0].cpu()], caption=["pred", "gt"])
+
         return loss
     
     def validation_step(self, batch, batch_idx):

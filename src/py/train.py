@@ -20,18 +20,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     L.seed_everything(args.seed)
-    datamodule = BlenderDataModule(args.root, args.batch_size, 16, rand=True)
-    model = MobileR2LLighningModule(5e-4, 16*3, 10, 256, 16, 3)
+    datamodule = BlenderDataModule(args.root, args.batch_size, 16, rand=False)
+    model = MobileR2LLighningModule(5e-4, 16*3, 10, 256, 27, 3)
     trainer = L.Trainer(
         logger = WandbLogger("MobileR2L", project="NeLF"),
         callbacks=[
             ModelCheckpoint(
                 dirpath=args.checkpoint,
                 monitor="val_psnr", mode="max",
-                every_n_train_steps=100
+                verbose=True
             )
         ],
-        max_steps=args.train_steps
+        max_steps=args.train_steps,
     )
 
     trainer.fit(
