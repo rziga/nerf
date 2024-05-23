@@ -12,7 +12,7 @@ from .utils import get_rays, get_c2w_pseudo
 
 class BlenderPseudoDataset(Dataset):
 
-    def __init__(self, root, num_samples, rand) -> None:
+    def __init__(self, root, num_samples, rand):
         super().__init__()
         self.num_samples = num_samples
         self.rand = rand
@@ -36,10 +36,7 @@ class BlenderPseudoDataset(Dataset):
             self.dataset_info["downscaled_height"],
             self.dataset_info["downscaled_width"],
             self.dataset_info["downscaled_focal"],
-            pose,
-            0, 1,
-            self.num_samples,
-            self.rand
+            pose, 2, 6, self.num_samples, self.rand
         )
         return rays, img
     

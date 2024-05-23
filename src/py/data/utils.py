@@ -33,8 +33,9 @@ def get_rays(H, W, focal, pose, near, far, num_samples, rand):
     rayo, rayd = get_ray_origin_dir(H, W, focal, pose)
     depths = torch.linspace(near, far, num_samples).view(num_samples, 1, 1, 1)
     if rand:
-        noise = torch.rand([num_samples, 1, H, W]) * (far-near) / num_samples
-        depths = depths + noise
+        noise = torch.rand([num_samples, 1, H, W]) - 0.5
+        noise *= (far - near) / num_samples
+        depths = torch.clamp(depths + noise, near, far)
     rays = rayo + rayd * depths
     rays = rays.reshape(-1, H, W)
     return rays
