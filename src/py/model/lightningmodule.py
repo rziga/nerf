@@ -1,5 +1,6 @@
 import lightning as L
 from torch.optim import Adam
+from torch.optim.lr_scheduler import LinearLR, ExponentialLR, SequentialLR
 from torch.nn import functional as F
 from torchmetrics.image import PeakSignalNoiseRatio
 
@@ -23,8 +24,22 @@ class MobileR2LLighningModule(L.LightningModule):
         self.test_psnr = PeakSignalNoiseRatio()
     
     def configure_optimizers(self):
+        # optimizer
         optimizer = Adam(self.model.parameters(), self.hparams["learning_rate"])
-        return optimizer
+
+        #scheduler - linear rampup -> exponential decay
+        switch_step = 200
+        scheduler = SequentialLR(optimizer, [
+            LinearLR(optimizer, 0.1, 1.0, switch_step),
+            ExponentialLR(optimizer, 0.999)
+        ], milestones=[switch_step])
+        lr_scheduler_config = {
+            "scheduler": scheduler,
+            "interval": "step",
+            "frequency": 1,
+        }
+
+        return [optimizer], [lr_scheduler_config]
     
     def training_step(self, batch, batch_idx):
         # forward pass
