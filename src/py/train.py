@@ -3,7 +3,7 @@ from pathlib import Path
 
 import lightning as L
 from pytorch_lightning.loggers import WandbLogger
-from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 
 from data.datamodule import BlenderDataModule
 from model.lightningmodule import MobileR2LLighningModule
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     L.seed_everything(args.seed)
-    datamodule = BlenderDataModule(args.root, args.batch_size, 16, rand=False)
+    datamodule = BlenderDataModule(args.root, args.batch_size, 16, rand=True)
     model = MobileR2LLighningModule(5e-4, 16*3, 10, 256, 27, 3)
     trainer = L.Trainer(
         logger = WandbLogger("MobileR2L", project="NeLF"),
@@ -29,7 +29,10 @@ if __name__ == "__main__":
                 dirpath=args.checkpoint,
                 monitor="val_psnr", mode="max",
                 verbose=True
-            )
+            ),
+            LearningRateMonitor(
+                logging_interval='step'
+            ),
         ],
         max_steps=args.train_steps,
     )

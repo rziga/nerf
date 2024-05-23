@@ -14,4 +14,4 @@ srun python train.py \
     --root /d/hpc/projects/FRI/zr13891/datasets/nerfs/lego/lego \
     --checkpoint ../../checkpoints \
     --train_steps 100000 \
-    --batch_size 12
+    --batch_size 10

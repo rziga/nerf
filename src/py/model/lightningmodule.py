@@ -31,7 +31,7 @@ class MobileR2LLighningModule(L.LightningModule):
         switch_step = 200
         scheduler = SequentialLR(optimizer, [
             LinearLR(optimizer, 0.1, 1.0, switch_step),
-            ExponentialLR(optimizer, 0.999)
+            ExponentialLR(optimizer, 0.99998)
         ], milestones=[switch_step])
         lr_scheduler_config = {
             "scheduler": scheduler,
