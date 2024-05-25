@@ -2,20 +2,97 @@
 <html>
     <head>
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-      </head>    
-    <header >
-        <title>ONNX Runtime JavaScript examples: Quick Start - Web (using script tag)</title>
+        <style>
+            body {
+                background-color: #f0f0f0;
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+    
+            header {
+                background-color: #4CAF50;
+                color: white;
+                width: 100%;
+                text-align: left;
+                padding: 10px 20px;
+                font-size: 24px;
+                box-sizing: border-box;
+            }
+    
+            main {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin-top: 20px;
+            }
+    
+            canvas {
+                border: 5px solid #ccc;
+                margin-bottom: 20px;
+            }
+    
+            form {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+    
+            label {
+                margin-right: 10px;
+            }
+    
+            input[type="range"], input[type="number"] {
+                margin: 0 5px;
+            }
+    
+            button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+    
+            button:hover {
+                background-color: #45a049;
+            }
+        </style>
+        <title>NeLF Inference</title>
+      </head>
+    <header>
+        NeLF Inference
     </header>
-    <body style="background-color:red;">
-    <canvas id="canvas"></canvas>
-    <h4>Tiny TFJS example<hr/></h4>
-    <div id="micro-out-div">Training...</div>
+    <body style="background-color:lightgray;">
+    <canvas id="canvas" height="800" width="800"></canvas>
+    <form>
+        <label for="phiRange">phi:</label>
+        <input type="range" id="phiRange" name="amountRange" min="0" max="90" value="30" oninput="this.form.amountInput.value=this.value" />
+        <input type="number" id="phiNumber" name="amountInput" min="0" max="90" value="30" oninput="this.form.amountRange.value=this.value" />
+    </form>
+    <form>
+        <label for="thetaRange">theta:</label>
+        <input type="range" id="thetaRange" name="amountRange" min="0" max="360" value="0" oninput="this.form.amountInput.value=this.value" />
+        <input type="number" id="thetaNumber" name="amountInput" min="0" max="360" value="0" oninput="this.form.amountRange.value=this.value" />
+    </form>
+    <button type="button" id="renderButton">render</button>
 
     <script type="module">
-        // import onnxruntime web from cdn
         import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/esm/ort.min.js";
-        // set wasm path override
         ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
+
+        const tr_r = (r) => [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, r],
+            [0, 0, 0, 1],
+        ]
 
         const rot_theta = (theta) => [
             [Math.cos(theta),0,-Math.sin(theta),0],
@@ -31,16 +108,21 @@
             [0,0,0,1],
         ];
 
+        function radians(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
         function get_pose_spherical(phi, theta) {
             const perm = tf.tensor([
                 [-1.,0,0,0],
-                [0,0,1,4],
+                [0,0,1,0],
                 [0,1,0,0],
                 [0,0,0,1],
             ]);
+            const tr = tf.tensor(tr_r(4));
             const rp = tf.tensor(rot_phi(phi));
-            const rt = tf.tensor(rot_phi(theta));
-            return perm.dot(rp.dot(rt));
+            const rt = tf.tensor(rot_theta(theta));
+            return perm.dot(rt.dot(rp.dot(tr)));
         }
 
         function get_ray_origin_dir(H, W, focal, pose) {
@@ -52,7 +134,7 @@
             ], -1);
             const ray_dirs = tf.einsum("hwc,dc->hwd", dirs, pose.slice([0, 0], [3, 3])).transpose([2, 0, 1]);
             const ray_origin = pose.slice([0, 3], [3, 1]).expandDims(-1);
-            return [ray_dirs, ray_origin];
+            return [ray_origin, ray_dirs];
         }
 
         function get_rays(H, W, focal, pose, near, far, num_samples) {
@@ -61,7 +143,34 @@
             const rays = rayo.add(rayd.mul(depths)).reshape([-1, H, W]);
             return rays;
         }
+        
+        async function render(rays) {
+            try {
+                const session = await ort.InferenceSession.create('model.onnx', {executionProviders: [
+                    //"webgl",
+                    "wasm"
+                ]});
 
+                // prepare inputs. a tensor need its corresponding TypedArray as data
+                const tensor = new ort.Tensor('float32', rays, [1, 48, 100, 100]);
+                const feeds = { "in": tensor };
+
+                // feed inputs and run
+                const start = new Date();
+                const results = await session.run(feeds);
+                const duration = (new Date()) - start;
+                console.log("fps", 1000 / duration)
+                console.log(results)
+
+                // read from results
+                const out = await results["out"].getData();
+                return out;
+
+            } catch (e) {
+                console.log(`failed to inference ONNX model: ${e}.`);
+            }
+        }
+        
         const H = 100;
         const W = 100;
         const focal = 138;
@@ -75,72 +184,32 @@
         const far  = 6;
         const num_samples = 16;
 
-        const mg = tf.meshgrid(tf.range(0, 100), tf.range(0, 100), "xy")
-        const i = mg[0];
-        const j = mg[1]; 
-        
-        const x = i.sub(H/2).div(focal);
-        const y = j.sub(H/2).div(focal).neg();
-
-        const dirs = tf.stack([x, y, tf.ones(x.shape).neg()], -1);
-        dirs.print()
-        console.log(dirs.shape)
-
-        const ray_dirs = tf.einsum("hwc,dc->hwd", dirs, pose.slice([0, 0], [3, 3])).transpose([2, 0, 1]);
-        ray_dirs.print()
-        console.log(ray_dirs.shape)
-
-        const ray_origin = pose.slice([0, 3], [3, 1]).expandDims(-1);
-        ray_origin.print()
-        console.log(ray_origin.shape)
-
-        async function render(rays) {
-            try {
-                const session = await ort.InferenceSession.create('model.onnx', {executionProviders: ["wasm"]});
-
-                // prepare inputs. a tensor need its corresponding TypedArray as data
-                const tensor = new ort.Tensor('float32', rays, [1, 48, 100, 100]);
-                const feeds = { "in": tensor };
-
-                // feed inputs and run
-                const start = new Date();
-                const results = await session.run(feeds);
-                const duration = (new Date()) - start;
-                console.log("fps", 1000 / duration)
-
-                // read from results
-                const out = await results["out"].getData();
-                return out;
-
-            } catch (e) {
-                console.log(`failed to inference ONNX model: ${e}.`);
-            }
-        }
-        
-        // render an image
-        const rays = get_rays(H, W, focal, pose, near, far, num_samples).dataSync();
-        console.log(rays);
-        const floatImage = await render(rays);
-        const imageData = new Uint8ClampedArray(800*800*4);
-        for (let i = 0; i < 800; i++) {
-            for (let j = 0; j < 800; j++) {
-                const ui = (i*800+j) * 4;
-                const fi = (i*800+j);
-                imageData[ui+0] = floatImage[fi + (800*800)*0]*255;
-                imageData[ui+1] = floatImage[fi + (800*800)*1]*255;
-                imageData[ui+2] = floatImage[fi + (800*800)*2]*255;
-                imageData[ui+3] = 255;
-            }
-        }
-        console.log(floatImage)
-        console.log(imageData)
-        
-        document.addEventListener("DOMContentLoaded", async () => {
+        const btn = document.getElementById("renderButton");
+        btn.addEventListener("click", async () => {
             // display the image
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
             ctx.height = 800;
             ctx.width = 800;
+
+            // render an image
+            const phi = document.getElementById("phiRange").value;
+            const theta = document.getElementById("thetaRange").value;
+            const pose = get_pose_spherical(radians(phi-90), radians(theta));
+            const rays = get_rays(H, W, focal, pose, near, far, num_samples).dataSync();
+            const floatImage = await render(rays);
+            const imageData = new Uint8ClampedArray(800*800*4);
+            for (let i = 0; i < 800; i++) {
+                for (let j = 0; j < 800; j++) {
+                    const ui = (i*800+j) * 4;
+                    const fi = (i*800+j);
+                    imageData[ui+0] = floatImage[fi + (800*800)*0] * 255;
+                    imageData[ui+1] = floatImage[fi + (800*800)*1] * 255;
+                    imageData[ui+2] = floatImage[fi + (800*800)*2] * 255;
+                    imageData[ui+3] = 255;
+                }
+            }
+            console.log(imageData)
             ctx.putImageData(new ImageData(imageData, 800, 800), 0, 0);
         })
     </script>
