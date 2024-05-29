@@ -4,65 +4,65 @@
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
         <style>
             body {
-                background-color: #f0f0f0;
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-    
-            header {
-                background-color: #4CAF50;
-                color: white;
-                width: 100%;
-                text-align: left;
-                padding: 10px 20px;
-                font-size: 24px;
-                box-sizing: border-box;
-            }
-    
-            main {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                margin-top: 20px;
-            }
-    
-            canvas {
-                border: 5px solid #ccc;
-                margin-bottom: 20px;
-            }
-    
-            form {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                margin-bottom: 10px;
-            }
-    
-            label {
-                margin-right: 10px;
-            }
-    
-            input[type="range"], input[type="number"] {
-                margin: 0 5px;
-            }
-    
-            button {
-                background-color: #4CAF50;
-                color: white;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 16px;
-            }
-    
-            button:hover {
-                background-color: #45a049;
-            }
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background-color: #FF5733;
+            color: white;
+            width: 100%;
+            text-align: left;
+            padding: 10px 20px;
+            font-size: 24px;
+            box-sizing: border-box;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        canvas {
+            border: 5px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        input[type="range"], input[type="number"] {
+            margin: 0 5px;
+        }
+
+        button {
+            background-color: #FF5733;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #E74C3C;
+        }
         </style>
         <title>NeLF Inference</title>
       </head>
@@ -86,6 +86,11 @@
     <script type="module">
         import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/esm/ort.min.js";
         ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
+        //ort.env.debug = true;
+        const session = await ort.InferenceSession.create('model.onnx', {executionProviders: [
+            "webgpu",
+            "wasm",
+        ]});
 
         const tr_r = (r) => [
             [1, 0, 0, 0],
@@ -146,11 +151,6 @@
         
         async function render(rays) {
             try {
-                const session = await ort.InferenceSession.create('model.onnx', {executionProviders: [
-                    //"webgl",
-                    "wasm"
-                ]});
-
                 // prepare inputs. a tensor need its corresponding TypedArray as data
                 const tensor = new ort.Tensor('float32', rays, [1, 48, 100, 100]);
                 const feeds = { "in": tensor };
@@ -167,7 +167,7 @@
                 return out;
 
             } catch (e) {
-                console.log(`failed to inference ONNX model: ${e}.`);
+                console.log("failed to inference ONNX model: ${e}.");
             }
         }
         
@@ -197,7 +197,11 @@
             const theta = document.getElementById("thetaRange").value;
             const pose = get_pose_spherical(radians(phi-90), radians(theta));
             const rays = get_rays(H, W, focal, pose, near, far, num_samples).dataSync();
+            
+            console.log("started rendering")
             const floatImage = await render(rays);
+            console.log("ended rendering")
+
             const imageData = new Uint8ClampedArray(800*800*4);
             for (let i = 0; i < 800; i++) {
                 for (let j = 0; j < 800; j++) {
