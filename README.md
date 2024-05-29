@@ -1,6 +1,10 @@
 # NeRF fun
 
-![vid](assets/output.mp4)
+
+https://github.com/rziga/nerf/assets/102856773/8a4d6e15-70b3-40bf-ab28-e5c6111a32f5
+
+
+
 
 ![img](assets/web.png)
 
