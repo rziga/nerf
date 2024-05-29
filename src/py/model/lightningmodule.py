@@ -2,7 +2,8 @@ import lightning as L
 from torch.optim import Adam
 from torch.optim.lr_scheduler import LinearLR, ExponentialLR, SequentialLR
 from torch.nn import functional as F
-from torchmetrics.image import PeakSignalNoiseRatio
+from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure, LearnedPerceptualImagePatchSimilarity
+#from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 from .model import MobileR2L
 
@@ -22,6 +23,8 @@ class MobileR2LLighningModule(L.LightningModule):
         self.train_psnr = PeakSignalNoiseRatio()
         self.val_psnr = PeakSignalNoiseRatio()
         self.test_psnr = PeakSignalNoiseRatio()
+        self.test_ssim = StructuralSimilarityIndexMeasure()
+        self.test_lpips = LearnedPerceptualImagePatchSimilarity()
     
     def configure_optimizers(self):
         # optimizer
@@ -79,4 +82,8 @@ class MobileR2LLighningModule(L.LightningModule):
         # log metrics
         self.test_psnr(pred_imgs, imgs)
         self.log("test_psnr", self.test_psnr)
+        self.test_ssim(pred_imgs, imgs)
+        self.log("test_ssim", self.test_lpips)
+        self.test_lpips(pred_imgs, imgs)
+        self.log("test_lpips", self.test_lpips)
         return loss
