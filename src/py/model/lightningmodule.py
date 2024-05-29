@@ -56,7 +56,7 @@ class MobileR2LLighningModule(L.LightningModule):
         self.log("train_psnr", self.train_psnr, prog_bar=True)
 
         # log images
-        if (self.trainer.global_step) % 500 == 0:
+        if (self.trainer.global_step) % 5000 == 0:
             self.logger.log_image(
                 key="samples", images=[pred_imgs[0].cpu(), imgs[0].cpu()], caption=["pred", "gt"])
 
